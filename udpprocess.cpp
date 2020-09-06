@@ -23,27 +23,29 @@ void *udpserver(void *vargp)
      sockfd = socket(AF_INET,SOCK_DGRAM,0);
      struct sockaddr_in serv,client;
      serv.sin_family = AF_INET;
+     serv.sin_port = htons(49152);
      serv.sin_addr.s_addr = INADDR_ANY;
-     serv.sin_port = htons(1000);
      bind(sockfd,(struct sockaddr *)&serv,sizeof(serv));
-     char buffer[1000];
+     char buffer[256];
      socklen_t l = sizeof(client);
      //socklen_t m = client;
      cout<<"\ngoing to recv\n";
+     int rc;
      while(true)
      {
-     int rc= recvfrom(sockfd,buffer,sizeof(buffer),0,(struct sockaddr *)&client,&l);
+     rc= recvfrom(sockfd,buffer,sizeof(buffer),0,(struct sockaddr *)&client,&l);
      if(rc<0)
      {
      cout<<"ERROR READING FROM SOCKET";
      }
      cout<<"\n the message received is : "<<buffer<<endl;
-     int rp= sendto(sockfd,"message received dude",2,0,(struct sockaddr *)&client,l);
+     int rp= sendto(sockfd,"hi",2,0,(struct sockaddr *)&client,l);
      if(rp<0)
      {
      cout<<"ERROR writing to SOCKET";
      }
      }
+    
 }
 
 void *udpclient(void *vargp)
@@ -52,21 +54,35 @@ void *udpclient(void *vargp)
      sockfd = socket(AF_INET,SOCK_DGRAM,0);
      struct sockaddr_in serv,client;
      serv.sin_family = AF_INET;
-     serv.sin_addr.s_addr = INADDR_ANY;
+     serv.sin_port = htons(49152);
+     serv.sin_addr.s_addr = inet_addr("127.0.0.1");
      char buffer[256];
-     cout<< ports[1];
-     for(int i=0;i<*arrSize;i++)
-     {
-     serv.sin_port = htons(ports[i]);
-    //  cout << ports[i];
-    //  cout << serv.sin_port;
      socklen_t l = sizeof(client);
      socklen_t m = sizeof(serv);
+     //socklen_t m = client;
      cout<<"\ngoing to send\n";
-     sendto(sockfd,"Hi dude",sizeof(buffer),0,(struct sockaddr *)&serv,m);
-     }
-    //  recvfrom(sockfd,buffer,256,0,(struct sockaddr *)&serv,&m);
-    //   cout<<"\n Server says : "<<buffer<<endl;
+     for(int i=0;i<*arrSize;i++)
+      {
+        
+     sendto(sockfd,"Hey server",sizeof(buffer),0,(struct sockaddr *)&serv,m);
+      }
+     recvfrom(sockfd,buffer,256,0,(struct sockaddr *)&serv,&m);
+      cout<<"\n Server says : "<<buffer<<endl;
+      
+    //  for(int i=0;i<*arrSize;i++)
+    //  {
+    //  serv.sin_port = htons(ports[i]);
+    // //  cout << ports[i];
+    // //  cout << serv.sin_port;
+    //  socklen_t l = sizeof(client);
+    //  socklen_t m = sizeof(serv);
+    //  cout<<"\ngoing to send"<<ports[i]<<"\n";
+    //  sendto(sockfd,"Hi dude",sizeof(buffer),0,(struct sockaddr *)&serv,m);
+    //   cout<<"sent on"<<ports[i];
+    //  }
+    //  cout<<"Hello";
+      //recvfrom(sockfd,buffer,256,0,(struct sockaddr *)&serv,&m);
+      //cout<<"\n Server says : "<<buffer<<endl;
 }
 
 
