@@ -54,7 +54,6 @@ void *udpclient(void *vargp)
      sockfd = socket(AF_INET,SOCK_DGRAM,0);
      struct sockaddr_in serv,client;
      serv.sin_family = AF_INET;
-     serv.sin_port = htons(49152);
      serv.sin_addr.s_addr = inet_addr("127.0.0.1");
      char buffer[256];
      socklen_t l = sizeof(client);
@@ -63,7 +62,8 @@ void *udpclient(void *vargp)
      cout<<"\ngoing to send\n";
      for(int i=0;i<*arrSize;i++)
       {
-        
+        cout<<"Sending to" <<ports[i]<<"\n";
+        serv.sin_port = htons(ports[i]);
      sendto(sockfd,"Hey server",sizeof(buffer),0,(struct sockaddr *)&serv,m);
       }
      recvfrom(sockfd,buffer,256,0,(struct sockaddr *)&serv,&m);
