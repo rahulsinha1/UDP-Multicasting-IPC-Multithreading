@@ -7,6 +7,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <pthread.h>
+#define DEFAULT_PORT 45952
 using namespace std;
 int *ports;
 int *arrSize;
@@ -44,8 +45,7 @@ void *udpserver(void *vargp)
      {
      cout<<"ERROR writing to SOCKET";
      }
-     }
-    
+     }  
 }
 
 void *udpclient(void *vargp)
@@ -109,8 +109,14 @@ int* getPorts(int *ports, int *arrSize)
 } 
 
 
-int main()
+int main(int argc, char const *argv[])
 {
+    int port = DEFAULT_PORT;
+    if(argc >= 2) {
+        port = atoi(argv[1]);
+    }
+    cout<<"Using Port : "<<port;
+    
     ports = new int [100];
     arrSize = new int;
     getPorts(ports,arrSize);
