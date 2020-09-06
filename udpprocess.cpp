@@ -11,7 +11,7 @@
 using namespace std;
 int *ports;
 int *arrSize;
-
+int port;
 void error(char *msg)
 {
     perror(msg);
@@ -20,6 +20,7 @@ void error(char *msg)
 
 void *udpserver(void *vargp)
 {
+    int count = 0;
      int sockfd;
      sockfd = socket(AF_INET,SOCK_DGRAM,0);
      struct sockaddr_in serv,client;
@@ -32,20 +33,30 @@ void *udpserver(void *vargp)
      //socklen_t m = client;
      cout<<"\ngoing to recv\n";
      int rc;
-     while(true)
+     while(1)
      {
      rc= recvfrom(sockfd,buffer,sizeof(buffer),0,(struct sockaddr *)&client,&l);
      if(rc<0)
      {
      cout<<"ERROR READING FROM SOCKET";
      }
-     cout<<"\n the message received is : "<<buffer<<endl;
-     int rp= sendto(sockfd,"hi",2,0,(struct sockaddr *)&client,l);
-     if(rp<0)
-     {
-     cout<<"ERROR writing to SOCKET";
-     }
+     else {
+            cout<<"\n The message received is : "<<buffer<<endl;
+            // int rp= sendto(sockfd,"hi",2,0,(struct sockaddr *)&client,l);
+            // if(rp<0) {
+            //     cout<<"ERROR writing to SOCKET";
+            // }
+            count += 1;
+            if (count == *arrSize - 1) {
+                cout << "Recieved ready message from "<<*arrSize - 1<<" processes... Exiting now";
+                exit(0);
+            }
+            else {
+                cout << "Recieved ready message from"<<count<<"processes... Waiting for remaining "<<*arrSize - count - 1 << " processes";
+            }
      }  
+     }
+     
 }
 
 void *udpclient(void *vargp)
@@ -60,14 +71,20 @@ void *udpclient(void *vargp)
      socklen_t m = sizeof(serv);
      //socklen_t m = client;
      cout<<"\ngoing to send\n";
-     for(int i=0;i<*arrSize;i++)
-      {
-        cout<<"Sending to" <<ports[i]<<"\n";
-        serv.sin_port = htons(ports[i]);
-     sendto(sockfd,"Hey server",sizeof(buffer),0,(struct sockaddr *)&serv,m);
-      }
-     recvfrom(sockfd,buffer,256,0,(struct sockaddr *)&serv,&m);
-      cout<<"\n Server says : "<<buffer<<endl;
+     while(1) {
+         sleep(5);
+         for(int i=0;i<*arrSize;i++) {
+            if (ports[i] == port) {
+                continue;
+            }  
+            cout<<"Sending to" <<ports[i]<<"\n";
+            serv.sin_port = htons(ports[i]);
+            sendto(sockfd,"Hey server",sizeof(buffer),0,(struct sockaddr *)&serv,m);
+        }
+     }
+     
+    //  recvfrom(sockfd,buffer,256,0,(struct sockaddr *)&serv,&m);
+    //   cout<<"\n Server says : "<<buffer<<endl;
       
     //  for(int i=0;i<*arrSize;i++)
     //  {
@@ -111,7 +128,7 @@ int* getPorts(int *ports, int *arrSize)
 
 int main(int argc, char const *argv[])
 {
-    int port = DEFAULT_PORT;
+    port = DEFAULT_PORT;
     if(argc >= 2) {
         port = atoi(argv[1]);
     }
