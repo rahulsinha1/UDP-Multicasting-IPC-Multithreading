@@ -7,11 +7,12 @@
 #include <string.h>
 #include <stdlib.h>
 #include <pthread.h>
-#define DEFAULT_PORT 45952
+
 using namespace std;
 int *ports;
 int *arrSize;
-int port;
+char *message ="default";
+
 void error(char *msg)
 {
     perror(msg);
@@ -20,12 +21,11 @@ void error(char *msg)
 
 void *udpserver(void *vargp)
 {
-    int count = 0;
      int sockfd;
      sockfd = socket(AF_INET,SOCK_DGRAM,0);
      struct sockaddr_in serv,client;
      serv.sin_family = AF_INET;
-     serv.sin_port = htons(49152);
+     serv.sin_port = htons(50000);
      serv.sin_addr.s_addr = INADDR_ANY;
      bind(sockfd,(struct sockaddr *)&serv,sizeof(serv));
      char buffer[256];
@@ -33,30 +33,22 @@ void *udpserver(void *vargp)
      //socklen_t m = client;
      cout<<"\ngoing to recv\n";
      int rc;
-     while(1)
+     while(true)
      {
      rc= recvfrom(sockfd,buffer,sizeof(buffer),0,(struct sockaddr *)&client,&l);
+     //int recvPort = 
+     cout<<"RECEIVED FROM "<< ntohs(client.sin_port);
      if(rc<0)
      {
      cout<<"ERROR READING FROM SOCKET";
      }
-     else {
-            cout<<"\n The message received is : "<<buffer<<endl;
-            // int rp= sendto(sockfd,"hi",2,0,(struct sockaddr *)&client,l);
-            // if(rp<0) {
-            //     cout<<"ERROR writing to SOCKET";
-            // }
-            count += 1;
-            if (count == *arrSize - 1) {
-                cout << "Recieved ready message from "<<*arrSize - 1<<" processes... Exiting now";
-                exit(0);
-            }
-            else {
-                cout << "Recieved ready message from"<<count<<"processes... Waiting for remaining "<<*arrSize - count - 1 << " processes";
-            }
-     }  
+     cout<<"\n the message received is : "<<buffer<<endl;
+     int rp= sendto(sockfd,"hi",2,0,(struct sockaddr *)&client,l);
+     if(rp<0)
+     {
+     cout<<"ERROR writing to SOCKET";
      }
-     
+     }  
 }
 
 void *udpclient(void *vargp)
@@ -71,39 +63,42 @@ void *udpclient(void *vargp)
      socklen_t m = sizeof(serv);
      //socklen_t m = client;
      cout<<"\ngoing to send\n";
-     while(1) {
-         sleep(5);
-         for(int i=0;i<*arrSize;i++) {
-            if (ports[i] == port) {
-                continue;
-            }  
-            cout<<"Sending to" <<ports[i]<<"\n";
-            serv.sin_port = htons(ports[i]);
-            sendto(sockfd,"Hey server",sizeof(buffer),0,(struct sockaddr *)&serv,m);
-        }
-     }
-     
-    //  recvfrom(sockfd,buffer,256,0,(struct sockaddr *)&serv,&m);
-    //   cout<<"\n Server says : "<<buffer<<endl;
+     int newports[] ={50000};
+     int portsSize = sizeof(newports)/sizeof(newports[0]);
+     while(true)
+     {
+     for(int i=0;i<portsSize;i++)
+      {
+        cout<<"\nSending to" <<newports[i]<<"\n";
+        serv.sin_port = htons(newports[i]);
+        sendto(sockfd,message,strlen(message) + 1,0,(struct sockaddr *)&serv,m);
+
       
-    //  for(int i=0;i<*arrSize;i++)
-    //  {
-    //  serv.sin_port = htons(ports[i]);
-    // //  cout << ports[i];
-    // //  cout << serv.sin_port;
-    //  socklen_t l = sizeof(client);
-    //  socklen_t m = sizeof(serv);
-    //  cout<<"\ngoing to send"<<ports[i]<<"\n";
-    //  sendto(sockfd,"Hi dude",sizeof(buffer),0,(struct sockaddr *)&serv,m);
-    //   cout<<"sent on"<<ports[i];
-    //  }
-    //  cout<<"Hello";
-      //recvfrom(sockfd,buffer,256,0,(struct sockaddr *)&serv,&m);
-      //cout<<"\n Server says : "<<buffer<<endl;
+     int rc =  recvfrom(sockfd,buffer,256,0,(struct sockaddr *)&serv,&m);
+     if(rc>0)
+     {
+         cout<<"\n Server says : "<<buffer<<endl;
+         newports[i]= -1;
+     }
+      }
+      bool flag = true;
+      for(int x=0;x<portsSize;x++)
+      {
+          if (newports[x]!=-1)
+          {
+              flag = false;
+          }
+      }
+      if(flag) {
+          break;
+      }
+      }
+      cout<< "\nho gya send bhosdike\n";
+      
 }
 
 
-int* getPorts(int *ports, int *arrSize)
+void getPorts(int *ports, int *arrSize)
 {
     char const* fileName = "./data";//argv[1]; /* should check that argc > 1 */
     FILE* file = fopen(fileName, "r"); /* should check the result */
@@ -122,22 +117,19 @@ int* getPorts(int *ports, int *arrSize)
     // }
     *arrSize = size_of_array;
     fclose(file);
-    return ports;
 } 
 
 
-int main(int argc, char const *argv[])
+int main(int argc, char *argv[])
 {
-    port = DEFAULT_PORT;
     if(argc >= 2) {
-        port = atoi(argv[1]);
+        message = argv[1];
     }
-    cout<<"Using Port : "<<port;
-    
+    cout<<"message is : "<<message<<"\n";
+    cout<<sizeof(message);
     ports = new int [100];
     arrSize = new int;
     getPorts(ports,arrSize);
-    cout << *arrSize;
     pthread_t server_thread;
     cout<< "Before server Thread\n";
     pthread_create(&server_thread, NULL, udpserver, NULL);
