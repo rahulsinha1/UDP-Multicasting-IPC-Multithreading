@@ -7,11 +7,15 @@
 #include <string.h>
 #include <stdlib.h>
 #include <pthread.h>
+#include <fstream>
+#include <sstream>
 
 using namespace std;
-int *ports;
+int ports[20];
+string container_ids[20];
 int *arrSize;
 char *message ="default";
+std::ifstream infile("data_id_port");
 
 void error(char *msg)
 {
@@ -63,14 +67,14 @@ void *udpclient(void *vargp)
      socklen_t m = sizeof(serv);
      //socklen_t m = client;
      cout<<"\ngoing to send\n";
-     int newports[] ={50000};
-     int portsSize = sizeof(newports)/sizeof(newports[0]);
+     //int newports[] ={50000};
+     //int portsSize = sizeof(newports)/sizeof(newports[0]);
      while(true)
      {
-     for(int i=0;i<portsSize;i++)
+     for(int i=0;i<*arrSize;i++)
       {
-        cout<<"\nSending to" <<newports[i]<<"\n";
-        serv.sin_port = htons(newports[i]);
+        cout<<"\nSending to" <<ports[i]<<"\n";
+        serv.sin_port = htons(ports[i]);
         sendto(sockfd,message,strlen(message) + 1,0,(struct sockaddr *)&serv,m);
 
       
@@ -78,13 +82,13 @@ void *udpclient(void *vargp)
      if(rc>0)
      {
          cout<<"\n Server says : "<<buffer<<endl;
-         newports[i]= -1;
+         ports[i]= -1;
      }
       }
       bool flag = true;
-      for(int x=0;x<portsSize;x++)
+      for(int x=0;x<*arrSize;x++)
       {
-          if (newports[x]!=-1)
+          if (ports[x]!=-1)
           {
               flag = false;
           }
@@ -98,38 +102,35 @@ void *udpclient(void *vargp)
 }
 
 
-void getPorts(int *ports, int *arrSize)
-{
-    char const* fileName = "./data";//argv[1]; /* should check that argc > 1 */
-    FILE* file = fopen(fileName, "r"); /* should check the result */
-    char line[256];
-    //int arr[100];
-    int size_of_array = 0;
-    int i;
+int getPorts(char file_name[], string container_ids[], int ports[]) {
+	int size = 0;
 
-    while (fgets(line, sizeof(line), file)) {
-    	int num = atoi(line);
-    	ports[size_of_array++] = num;
-    }
+	FILE* file = fopen(file_name, "r");
 
-    // for(i=0; i<size_of_array; i++) {
-    // 	printf("Number %d : %d\n", i, ports[i]);
-    // }
-    *arrSize = size_of_array;
-    fclose(file);
-} 
+	std::string line;
+	while (std::getline(infile, line))
+	{
+	    std::istringstream iss(line);
+	    if (!(iss >> container_ids[size] >> ports[size])) { break; } // error
+	    size++;
+	}
+
+	return size;
+}
 
 
 int main(int argc, char *argv[])
 {
+    char filename[] = "data_id_port";
+
     if(argc >= 2) {
         message = argv[1];
     }
     cout<<"message is : "<<message<<"\n";
     cout<<sizeof(message);
-    ports = new int [100];
     arrSize = new int;
-    getPorts(ports,arrSize);
+
+    *arrSize = getPorts(filename, container_ids, ports);
     pthread_t server_thread;
     cout<< "Before server Thread\n";
     pthread_create(&server_thread, NULL, udpserver, NULL);
