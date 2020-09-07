@@ -15,7 +15,7 @@ int ports[20];
 string container_ids[20];
 int *arrSize;
 char *message ="default";
-std::ifstream infile("data_id_port");
+std::ifstream infile("config");
 
 void error(char *msg)
 {
@@ -105,8 +105,6 @@ void *udpclient(void *vargp)
 int getPorts(char file_name[], string container_ids[], int ports[]) {
 	int size = 0;
 
-	FILE* file = fopen(file_name, "r");
-
 	std::string line;
 	while (std::getline(infile, line))
 	{
@@ -121,7 +119,7 @@ int getPorts(char file_name[], string container_ids[], int ports[]) {
 
 int main(int argc, char *argv[])
 {
-    char filename[] = "data_id_port";
+    char filename[] = "config";
 
     if(argc >= 2) {
         message = argv[1];
