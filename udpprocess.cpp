@@ -40,19 +40,36 @@ void *udpserver(void *vargp)
      while(true)
      {
      rc= recvfrom(sockfd,buffer,sizeof(buffer),0,(struct sockaddr *)&client,&l);
-     //int recvPort = 
+     //int recvPort =
      cout<<"RECEIVED FROM "<< ntohs(client.sin_port);
-     if(rc<0)
-     {
-     cout<<"ERROR READING FROM SOCKET";
+     if(rc<0) {
+        cout<<"ERROR READING FROM SOCKET";
      }
-     cout<<"\n the message received is : "<<buffer<<endl;
-     int rp= sendto(sockfd,"hi",2,0,(struct sockaddr *)&client,l);
-     if(rp<0)
-     {
-     cout<<"ERROR writing to SOCKET";
+     else {
+         for(int x = 0; x < *arrSize; x++) {
+             if(strcmp(buffer, container_ids[x].c_str()) == 0) {
+                 cout << " Successfully Received from container ID[ "<<x<<"]" << container_ids[x];
+                 container_ids[x].clear();
+                int rp= sendto(sockfd,"hi",2,0,(struct sockaddr *)&client,l);
+                if(rp<0)
+                {
+                cout<<"ERROR writing to SOCKET";
+                }
+             }
+         }
+         bool flag = true;
+         for(int x = 0; x < *arrSize; x++) {
+             if (!container_ids[x].empty()) {
+                 flag = false;
+             }
+         }
+         if(flag) {
+             break;
+         }
      }
-     }  
+     //cout<<"\n the message received is : "<<buffer<<endl;
+     }
+     cout << "\n***********READY**********" << endl;
 }
 
 void *udpclient(void *vargp)
@@ -97,7 +114,7 @@ void *udpclient(void *vargp)
           break;
       }
       }
-      cout<< "\nho gya send bhosdike\n";
+      cout<< "\nho gya send\n";
       
 }
 
